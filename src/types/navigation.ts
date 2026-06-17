@@ -10,5 +10,5 @@ export type RootStackParamList = {
     difficulty: 'easy' | 'medium' | 'hard';
   };
   ChampionList: undefined;
-  ChampionDetail: { championId: string };
+  ChampionDetail: { championId: string; championName: string };
 };

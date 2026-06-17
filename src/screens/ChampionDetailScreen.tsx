@@ -42,10 +42,12 @@ export default function ChampionDetailScreen({ route }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false; // C2
     getChampionDetail(championId)
-      .then(setDetail)
-      .catch(() => setError('データの読み込みに失敗しました'))
-      .finally(() => setLoading(false));
+      .then((d) => { if (!cancelled) setDetail(d); })
+      .catch(() => { if (!cancelled) setError('データの読み込みに失敗しました'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [championId]);
 
   if (loading) {

@@ -11,6 +11,7 @@ type Props = {
 };
 
 function getEvaluation(score: number, total: number): string {
+  if (total === 0) return 'エラー'; // D1
   const ratio = score / total;
   if (ratio === 1) return '完璧！さすがの知識力！';
   if (ratio >= 0.8) return '素晴らしい！かなり詳しいね！';

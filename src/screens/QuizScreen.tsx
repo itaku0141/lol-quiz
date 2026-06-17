@@ -40,13 +40,15 @@ export default function QuizScreen({ navigation, route }: Props) {
   const scoreRef = useRef(0);
 
   useEffect(() => {
+    let cancelled = false; // C1
     scoreRef.current = 0;
     setQuizState({ currentIndex: 0, phase: { answered: false } });
     setScreenPhase({ status: 'loading' });
 
     generateQuestions(category)
-      .then((qs) => setScreenPhase({ status: 'ready', questions: qs }))
-      .catch(() => setScreenPhase({ status: 'error', message: '問題の生成に失敗しました。\nネットワーク接続を確認してください。' }));
+      .then((qs) => { if (!cancelled) setScreenPhase({ status: 'ready', questions: qs }); })
+      .catch(() => { if (!cancelled) setScreenPhase({ status: 'error', message: '問題の生成に失敗しました。\nネットワーク接続を確認してください。' }); });
+    return () => { cancelled = true; };
   }, [category]);
 
   if (screenPhase.status === 'loading') {
@@ -125,9 +127,9 @@ export default function QuizScreen({ navigation, route }: Props) {
           </View>
 
           <View style={styles.choices}>
-            {currentQuestion.choices.map((choice) => (
+            {currentQuestion.choices.map((choice, i) => (
               <ChoiceButton
-                key={choice}
+                key={`${i}_${choice}`}
                 label={choice}
                 state={getChoiceState(choice)}
                 onPress={() => handleChoicePress(choice)}

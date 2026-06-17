@@ -5,22 +5,45 @@ import { stripHtml } from '../utils/stripHtml';
 
 const BASE = 'https://ddragon.leagueoflegends.com';
 
+// 並列呼び出し時の重複リクエストを防ぐ in-flight キャッシュ (A5)
+let _versionPromise: Promise<string> | null = null;
+
 async function fetchLatestVersion(): Promise<string> {
-  const res = await fetch(`${BASE}/api/versions.json`);
-  const versions: string[] = await res.json();
-  return versions[0];
+  if (!_versionPromise) {
+    _versionPromise = fetch(`${BASE}/api/versions.json`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`); // A1
+        return res.json() as Promise<string[]>;
+      })
+      .then((versions) => versions[0])
+      .finally(() => { _versionPromise = null; });
+  }
+  return _versionPromise;
+}
+
+async function safeParse<T>(json: string, cacheKey: string): Promise<T | null> {
+  try {
+    return JSON.parse(json) as T; // A2: 破損時は null を返して呼び元が再フェッチ
+  } catch {
+    await AsyncStorage.removeItem(cacheKey).catch(() => {});
+    return null;
+  }
 }
 
 export async function getChampions(): Promise<ChampionSummary[]> {
   const latest = await fetchLatestVersion();
-  const cachedVersion = await AsyncStorage.getItem('ddragon_version_v2');
-  const cachedData = await AsyncStorage.getItem('ddragon_champions');
+  const [cachedVersion, cachedData] = await Promise.all([
+    AsyncStorage.getItem('ddragon_version_v2'),
+    AsyncStorage.getItem('ddragon_champions'),
+  ]);
 
   if (cachedVersion === latest && cachedData) {
-    return JSON.parse(cachedData) as ChampionSummary[];
+    const parsed = await safeParse<ChampionSummary[]>(cachedData, 'ddragon_champions');
+    if (parsed) return parsed;
   }
 
   const res = await fetch(`${BASE}/cdn/${latest}/data/ja_JP/champion.json`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`); // A1
   const json = await res.json();
 
   const champions: ChampionSummary[] = Object.values<{
@@ -45,7 +68,7 @@ export async function getChampions(): Promise<ChampionSummary[]> {
   await AsyncStorage.multiSet([
     ['ddragon_version_v2', latest],
     ['ddragon_champions', JSON.stringify(champions)],
-  ]);
+  ]).catch(() => {}); // A3: キャッシュ書き込み失敗は無視して続行
 
   return champions;
 }
@@ -65,21 +88,24 @@ export type RuneInfo = {
 
 export async function getItems(): Promise<ItemInfo[]> {
   const latest = await fetchLatestVersion();
-  const cached = await AsyncStorage.getItem('ddragon_items');
-  const cachedVersion = await AsyncStorage.getItem('ddragon_items_version');
+  const [cachedVersion, cached] = await Promise.all([
+    AsyncStorage.getItem('ddragon_items_version'),
+    AsyncStorage.getItem('ddragon_items'),
+  ]);
 
   if (cachedVersion === latest && cached) {
-    return JSON.parse(cached) as ItemInfo[];
+    const parsed = await safeParse<ItemInfo[]>(cached, 'ddragon_items');
+    if (parsed) return parsed;
   }
 
   const res = await fetch(`${BASE}/cdn/${latest}/data/ja_JP/item.json`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`); // A1
   const json = await res.json();
 
   const items: ItemInfo[] = Object.entries<{
     name: string;
     description: string;
     hideFromAll?: boolean;
-    inStore?: boolean;
     maps: Record<string, boolean>;
     gold: { purchasable: boolean };
   }>(json.data)
@@ -97,32 +123,28 @@ export async function getItems(): Promise<ItemInfo[]> {
   await AsyncStorage.multiSet([
     ['ddragon_items_version', latest],
     ['ddragon_items', JSON.stringify(items)],
-  ]);
+  ]).catch(() => {}); // A3
 
   return items;
 }
 
 export async function getRunes(): Promise<RuneInfo[]> {
   const latest = await fetchLatestVersion();
-  const cached = await AsyncStorage.getItem('ddragon_runes');
-  const cachedVersion = await AsyncStorage.getItem('ddragon_runes_version');
+  const [cachedVersion, cached] = await Promise.all([
+    AsyncStorage.getItem('ddragon_runes_version'),
+    AsyncStorage.getItem('ddragon_runes'),
+  ]);
 
   if (cachedVersion === latest && cached) {
-    return JSON.parse(cached) as RuneInfo[];
+    const parsed = await safeParse<RuneInfo[]>(cached, 'ddragon_runes');
+    if (parsed) return parsed;
   }
 
   const res = await fetch(`${BASE}/cdn/${latest}/data/ja_JP/runesReforged.json`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`); // A1
   const paths: {
-    id: number;
-    key: string;
-    name: string;
     slots: {
-      runes: {
-        id: number;
-        key: string;
-        name: string;
-        shortDesc: string;
-      }[];
+      runes: { id: number; key: string; name: string; shortDesc: string }[];
     }[];
   }[] = await res.json();
 
@@ -140,7 +162,7 @@ export async function getRunes(): Promise<RuneInfo[]> {
   await AsyncStorage.multiSet([
     ['ddragon_runes_version', latest],
     ['ddragon_runes', JSON.stringify(runes)],
-  ]);
+  ]).catch(() => {}); // A3
 
   return runes;
 }
@@ -148,10 +170,14 @@ export async function getRunes(): Promise<RuneInfo[]> {
 export async function getChampionDetail(championId: string): Promise<ChampionDetail> {
   const cacheKey = `ddragon_champion_${championId}`;
   const cached = await AsyncStorage.getItem(cacheKey);
-  if (cached) return JSON.parse(cached) as ChampionDetail;
+  if (cached) {
+    const parsed = await safeParse<ChampionDetail>(cached, cacheKey);
+    if (parsed) return parsed;
+  }
 
-  const version = (await AsyncStorage.getItem('ddragon_version')) ?? await fetchLatestVersion();
+  const version = (await AsyncStorage.getItem('ddragon_version_v2')) ?? await fetchLatestVersion(); // A4: 正しいキーを参照
   const res = await fetch(`${BASE}/cdn/${version}/data/ja_JP/champion/${championId}.json`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`); // A1
   const json = await res.json();
   const raw = json.data[championId];
 
@@ -178,6 +204,6 @@ export async function getChampionDetail(championId: string): Promise<ChampionDet
     })) as ChampionDetail['spells'],
   };
 
-  await AsyncStorage.setItem(cacheKey, JSON.stringify(detail));
+  await AsyncStorage.setItem(cacheKey, JSON.stringify(detail)).catch(() => {}); // A3
   return detail;
 }

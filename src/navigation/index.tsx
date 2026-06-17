@@ -28,7 +28,7 @@ export default function RootNavigator() {
       <Stack.Screen
         name="ChampionDetail"
         component={ChampionDetailScreen}
-        options={({ route }) => ({ title: route.params.championId, headerBackTitle: '' })}
+        options={({ route }) => ({ title: route.params.championName, headerBackTitle: '' })}
       />
     </Stack.Navigator>
   );

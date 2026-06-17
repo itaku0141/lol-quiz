@@ -150,7 +150,7 @@ export default function ChampionListScreen({ navigation }: Props) {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.cell}
-            onPress={() => navigation.navigate('ChampionDetail', { championId: item.id })}
+            onPress={() => navigation.navigate('ChampionDetail', { championId: item.id, championName: item.name })}
             activeOpacity={0.7}
           >
             <Image source={{ uri: item.iconUrl }} style={styles.icon} />
