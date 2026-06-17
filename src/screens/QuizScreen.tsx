@@ -29,7 +29,7 @@ type ScreenPhase =
   | { status: 'ready'; questions: QuizQuestion[] };
 
 export default function QuizScreen({ navigation, route }: Props) {
-  const { category, difficulty } = route.params;
+  const { category, difficulty, reviewQuestions } = route.params;
 
   const [screenPhase, setScreenPhase] = useState<ScreenPhase>({ status: 'loading' });
   const [quizState, setQuizState] = useState<QuizState>({
@@ -38,18 +38,25 @@ export default function QuizScreen({ navigation, route }: Props) {
   });
 
   const scoreRef = useRef(0);
+  const wrongRef = useRef<QuizQuestion[]>([]);
 
   useEffect(() => {
-    let cancelled = false; // C1
+    let cancelled = false;
     scoreRef.current = 0;
+    wrongRef.current = [];
     setQuizState({ currentIndex: 0, phase: { answered: false } });
-    setScreenPhase({ status: 'loading' });
 
+    if (reviewQuestions) {
+      setScreenPhase({ status: 'ready', questions: reviewQuestions });
+      return;
+    }
+
+    setScreenPhase({ status: 'loading' });
     generateQuestions(category)
       .then((qs) => { if (!cancelled) setScreenPhase({ status: 'ready', questions: qs }); })
       .catch(() => { if (!cancelled) setScreenPhase({ status: 'error', message: '問題の生成に失敗しました。\nネットワーク接続を確認してください。' }); });
     return () => { cancelled = true; };
-  }, [category]);
+  }, [category, reviewQuestions]);
 
   if (screenPhase.status === 'loading') {
     return (
@@ -88,7 +95,11 @@ export default function QuizScreen({ navigation, route }: Props) {
   const handleChoicePress = (choice: string) => {
     if (phase.answered) return;
     const isCorrect = choice === currentQuestion.correctChoice;
-    if (isCorrect) scoreRef.current += 1;
+    if (isCorrect) {
+      scoreRef.current += 1;
+    } else {
+      wrongRef.current = [...wrongRef.current, currentQuestion];
+    }
     setQuizState(prev => ({ ...prev, phase: { answered: true, selectedChoice: choice, isCorrect } }));
   };
 
@@ -99,6 +110,7 @@ export default function QuizScreen({ navigation, route }: Props) {
         total,
         category,
         difficulty,
+        wrongQuestions: wrongRef.current,
       });
     } else {
       setQuizState({ currentIndex: currentIndex + 1, phase: { answered: false } });

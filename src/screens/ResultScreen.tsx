@@ -21,7 +21,7 @@ function getEvaluation(score: number, total: number): string {
 }
 
 export default function ResultScreen({ navigation, route }: Props) {
-  const { score, total, category, difficulty } = route.params;
+  const { score, total, category, difficulty, wrongQuestions } = route.params;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -37,6 +37,16 @@ export default function ResultScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.buttons}>
+          {wrongQuestions.length > 0 && (
+            <TouchableOpacity
+              style={styles.reviewButton}
+              onPress={() => navigation.replace('Quiz', { category, difficulty, reviewQuestions: wrongQuestions })}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.reviewText}>間違えた {wrongQuestions.length} 問を復習</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
             style={styles.retryButton}
             onPress={() => navigation.replace('Quiz', { category, difficulty })}
@@ -107,6 +117,19 @@ const styles = StyleSheet.create({
   },
   buttons: {
     gap: 14,
+  },
+  reviewButton: {
+    backgroundColor: Colors.card,
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.incorrect,
+  },
+  reviewText: {
+    color: Colors.incorrect,
+    fontSize: 16,
+    fontWeight: '700',
   },
   retryButton: {
     backgroundColor: Colors.accent,
