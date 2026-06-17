@@ -1,2 +1,2 @@
-# lol-apps
-lol apps
+# lol-quiz
+lol quiz
