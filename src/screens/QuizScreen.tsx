@@ -28,15 +28,6 @@ type ScreenPhase =
   | { status: 'error'; message: string }
   | { status: 'ready'; questions: QuizQuestion[] };
 
-function shuffle<T>(arr: T[]): T[] {
-  const result = [...arr];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
 export default function QuizScreen({ navigation, route }: Props) {
   const { category, difficulty } = route.params;
 
@@ -47,7 +38,6 @@ export default function QuizScreen({ navigation, route }: Props) {
   });
 
   const scoreRef = useRef(0);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     scoreRef.current = 0;
@@ -55,16 +45,8 @@ export default function QuizScreen({ navigation, route }: Props) {
     setScreenPhase({ status: 'loading' });
 
     generateQuestions(category)
-      .then((qs) => {
-        setScreenPhase({ status: 'ready', questions: qs });
-      })
-      .catch(() => {
-        setScreenPhase({ status: 'error', message: '問題の生成に失敗しました。\nネットワーク接続を確認してください。' });
-      });
-
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
+      .then((qs) => setScreenPhase({ status: 'ready', questions: qs }))
+      .catch(() => setScreenPhase({ status: 'error', message: '問題の生成に失敗しました。\nネットワーク接続を確認してください。' }));
   }, [category]);
 
   if (screenPhase.status === 'loading') {
@@ -81,7 +63,7 @@ export default function QuizScreen({ navigation, route }: Props) {
       <View style={styles.center}>
         <Text style={styles.errorText}>{screenPhase.message}</Text>
         <TouchableOpacity
-          style={styles.retryButton}
+          style={styles.nextButton}
           onPress={() => {
             setScreenPhase({ status: 'loading' });
             generateQuestions(category)
@@ -89,7 +71,7 @@ export default function QuizScreen({ navigation, route }: Props) {
               .catch(() => setScreenPhase({ status: 'error', message: '問題の生成に失敗しました。\nネットワーク接続を確認してください。' }));
           }}
         >
-          <Text style={styles.retryText}>再試行</Text>
+          <Text style={styles.nextButtonText}>再試行</Text>
         </TouchableOpacity>
       </View>
     );
@@ -99,27 +81,26 @@ export default function QuizScreen({ navigation, route }: Props) {
   const { currentIndex, phase } = quizState;
   const currentQuestion = questions[currentIndex];
   const total = questions.length;
+  const isLast = currentIndex === total - 1;
 
   const handleChoicePress = (choice: string) => {
     if (phase.answered) return;
-
     const isCorrect = choice === currentQuestion.correctChoice;
     if (isCorrect) scoreRef.current += 1;
-
     setQuizState(prev => ({ ...prev, phase: { answered: true, selectedChoice: choice, isCorrect } }));
+  };
 
-    timeoutRef.current = setTimeout(() => {
-      if (currentIndex < total - 1) {
-        setQuizState({ currentIndex: currentIndex + 1, phase: { answered: false } });
-      } else {
-        navigation.replace('Result', {
-          score: scoreRef.current,
-          total,
-          category,
-          difficulty,
-        });
-      }
-    }, 1200);
+  const handleNext = () => {
+    if (isLast) {
+      navigation.replace('Result', {
+        score: scoreRef.current,
+        total,
+        category,
+        difficulty,
+      });
+    } else {
+      setQuizState({ currentIndex: currentIndex + 1, phase: { answered: false } });
+    }
   };
 
   const getChoiceState = (choice: string) => {
@@ -153,6 +134,14 @@ export default function QuizScreen({ navigation, route }: Props) {
               />
             ))}
           </View>
+
+          {phase.answered && (
+            <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
+              <Text style={styles.nextButtonText}>
+                {isLast ? '結果を見る' : '次の問題へ'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -182,16 +171,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  retryButton: {
-    backgroundColor: Colors.accent,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 8,
-  },
-  retryText: {
-    color: Colors.background,
-    fontWeight: '700',
-  },
   container: {
     flex: 1,
     paddingHorizontal: 20,
@@ -218,4 +197,15 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   choices: {},
+  nextButton: {
+    backgroundColor: Colors.accent,
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  nextButtonText: {
+    color: Colors.background,
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });

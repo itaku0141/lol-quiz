@@ -9,8 +9,6 @@ type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
 };
 
-type Difficulty = 'easy' | 'medium' | 'hard';
-
 const CATEGORY_LABELS: Record<QuizCategory, string> = {
   skill:    'スキル (Q/W/E)',
   ultimate: 'アルティメット',
@@ -19,15 +17,8 @@ const CATEGORY_LABELS: Record<QuizCategory, string> = {
   rune:     'ルーン',
 };
 
-const DIFFICULTY_LABELS: Record<Difficulty, string> = {
-  easy:   'かんたん',
-  medium: 'ふつう',
-  hard:   'むずかしい',
-};
-
 export default function HomeScreen({ navigation }: Props) {
   const [category, setCategory] = useState<QuizCategory>('skill');
-  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -59,26 +50,9 @@ export default function HomeScreen({ navigation }: Props) {
           </ScrollView>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>難易度</Text>
-          <View style={styles.row}>
-            {(Object.keys(DIFFICULTY_LABELS) as Difficulty[]).map((key) => (
-              <TouchableOpacity
-                key={key}
-                style={[styles.toggleButton, difficulty === key && styles.toggleButtonActive]}
-                onPress={() => setDifficulty(key)}
-              >
-                <Text style={[styles.toggleText, difficulty === key && styles.toggleTextActive]}>
-                  {DIFFICULTY_LABELS[key]}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
         <TouchableOpacity
           style={styles.startButton}
-          onPress={() => navigation.navigate('Quiz', { category, difficulty })}
+          onPress={() => navigation.navigate('Quiz', { category, difficulty: 'medium' })}
           activeOpacity={0.8}
         >
           <Text style={styles.startText}>START</Text>
@@ -156,31 +130,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   chipTextActive: {
-    color: Colors.accent,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.card,
-    alignItems: 'center',
-  },
-  toggleButtonActive: {
-    borderColor: Colors.accent,
-    backgroundColor: '#1E2A3A',
-  },
-  toggleText: {
-    color: Colors.textDim,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  toggleTextActive: {
     color: Colors.accent,
   },
   startButton: {
