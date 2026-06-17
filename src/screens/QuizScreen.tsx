@@ -136,11 +136,19 @@ export default function QuizScreen({ navigation, route }: Props) {
           </View>
 
           {phase.answered && (
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
-              <Text style={styles.nextButtonText}>
-                {isLast ? '結果を見る' : '次の問題へ'}
-              </Text>
-            </TouchableOpacity>
+            <>
+              <View style={[styles.resultBanner, phase.isCorrect ? styles.resultCorrect : styles.resultIncorrect]}>
+                <Text style={styles.resultIcon}>{phase.isCorrect ? '✓' : '✗'}</Text>
+                <Text style={styles.resultText}>
+                  {phase.isCorrect ? '正解！' : `不正解　正解：${currentQuestion.correctChoice}`}
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
+                <Text style={styles.nextButtonText}>
+                  {isLast ? '結果を見る' : '次の問題へ'}
+                </Text>
+              </TouchableOpacity>
+            </>
           )}
         </ScrollView>
       </View>
@@ -197,6 +205,34 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   choices: {},
+  resultBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+  },
+  resultCorrect: {
+    backgroundColor: '#1A3A1E',
+    borderColor: Colors.correct,
+  },
+  resultIncorrect: {
+    backgroundColor: '#3A1A1A',
+    borderColor: Colors.incorrect,
+  },
+  resultIcon: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  resultText: {
+    flex: 1,
+    color: Colors.text,
+    fontSize: 15,
+    fontWeight: '600',
+  },
   nextButton: {
     backgroundColor: Colors.accent,
     paddingVertical: 16,

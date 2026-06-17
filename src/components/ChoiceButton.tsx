@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../theme/colors';
 
 type ChoiceState = 'default' | 'correct' | 'incorrect' | 'disabled';
@@ -10,18 +10,31 @@ type Props = {
   onPress: () => void;
 };
 
+const ICON: Record<ChoiceState, string | null> = {
+  default: null,
+  correct: '✓',
+  incorrect: '✗',
+  disabled: null,
+};
+
 export default function ChoiceButton({ label, state, onPress }: Props) {
-  const containerStyle = [styles.button, stateStyles[state]];
-  const textStyle = [styles.text, state === 'disabled' ? styles.textDisabled : null];
+  const icon = ICON[state];
 
   return (
     <TouchableOpacity
-      style={containerStyle}
+      style={[styles.button, stateStyles[state]]}
       onPress={onPress}
       disabled={state !== 'default'}
       activeOpacity={0.7}
     >
-      <Text style={textStyle}>{label}</Text>
+      <View style={styles.inner}>
+        {icon && (
+          <Text style={[styles.icon, iconColorStyles[state]]}>{icon}</Text>
+        )}
+        <Text style={[styles.text, textColorStyles[state]]} numberOfLines={2}>
+          {label}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -36,14 +49,22 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     backgroundColor: Colors.card,
   },
+  inner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  icon: {
+    fontSize: 18,
+    fontWeight: '700',
+    width: 20,
+    textAlign: 'center',
+  },
   text: {
+    flex: 1,
     color: Colors.text,
     fontSize: 15,
     fontWeight: '500',
-    textAlign: 'center',
-  },
-  textDisabled: {
-    color: Colors.textDim,
   },
 });
 
@@ -60,4 +81,18 @@ const stateStyles = StyleSheet.create({
   disabled: {
     opacity: 0.4,
   },
+});
+
+const textColorStyles = StyleSheet.create({
+  default: {},
+  correct: { color: Colors.correct },
+  incorrect: { color: Colors.incorrect },
+  disabled: { color: Colors.textDim },
+});
+
+const iconColorStyles = StyleSheet.create({
+  default: {},
+  correct: { color: Colors.correct },
+  incorrect: { color: Colors.incorrect },
+  disabled: {},
 });
