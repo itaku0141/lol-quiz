@@ -14,15 +14,15 @@ import {
 } from 'react-native';
 import { getChampions } from '../services/dataDragon';
 import { Colors } from '../theme/colors';
-import { ChampionSummary, LaneRole } from '../types/champion';
 import { RootStackParamList } from '../types/navigation';
+import { ChampionSummary, LaneRole } from '../types/champion';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'ChampionList'>;
 };
 
 const LANE_FILTERS: { key: LaneRole | 'all'; label: string }[] = [
-  { key: 'all', label: '全て' },
+  { key: 'all', label: 'すべて' },
   { key: 'top', label: 'トップ' },
   { key: 'jungle', label: 'JG' },
   { key: 'mid', label: 'ミッド' },
@@ -31,7 +31,7 @@ const LANE_FILTERS: { key: LaneRole | 'all'; label: string }[] = [
 ];
 
 const CLASS_FILTERS: { key: string; label: string }[] = [
-  { key: 'all', label: '全て' },
+  { key: 'all', label: 'すべて' },
   { key: 'Fighter', label: 'ファイター' },
   { key: 'Tank', label: 'タンク' },
   { key: 'Mage', label: 'メイジ' },
@@ -141,25 +141,25 @@ export default function ChampionListScreen({ navigation }: Props) {
       </ScrollView>
 
       <View style={styles.listContainer}>
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        numColumns={3}
-        contentContainerStyle={styles.list}
-        columnWrapperStyle={styles.row}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.cell}
-            onPress={() => navigation.navigate('ChampionDetail', { championId: item.id, championName: item.name })}
-            activeOpacity={0.7}
-          >
-            <Image source={{ uri: item.iconUrl }} style={styles.icon} />
-            <Text style={styles.name} numberOfLines={1}>
-              {item.name}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          numColumns={3}
+          contentContainerStyle={styles.list}
+          columnWrapperStyle={styles.row}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.cell}
+              onPress={() => navigation.navigate('ChampionDetail', { championId: item.id, championName: item.name })}
+              activeOpacity={0.7}
+            >
+              <Image source={{ uri: item.iconUrl }} style={styles.icon} />
+              <Text style={styles.name} numberOfLines={1}>
+                {item.name}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
       </View>
     </SafeAreaView>
   );

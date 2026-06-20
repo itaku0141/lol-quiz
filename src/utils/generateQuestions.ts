@@ -33,7 +33,6 @@ async function generateSkillQuestions(
   const allChampions = await getChampions();
   const selected = shuffle(allChampions).slice(0, Math.min(25, allChampions.length));
 
-  // B2: 個別失敗を無視して成功した分だけ使う
   const results = await Promise.allSettled(selected.map((c) => getChampionDetail(c.id)));
   const details = results
     .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof getChampionDetail>>> => r.status === 'fulfilled')
@@ -54,7 +53,7 @@ async function generateSkillQuestions(
         slot: 'P',
       });
     } else if (category === 'ultimate') {
-      if (detail.spells.length < 4) continue; // B1: スペルが4未満のチャンピオンはスキップ
+      if (detail.spells.length < 4) continue;
       const spell = detail.spells[3];
       pool.push({
         championName: detail.name,

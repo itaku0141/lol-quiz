@@ -8,7 +8,7 @@ type Props = {
 };
 
 export default function ProgressBar({ current, total }: Props) {
-  const progress = current / total;
+  const progress = total > 0 ? current / total : 0;
 
   return (
     <View style={styles.container}>
@@ -17,7 +17,7 @@ export default function ProgressBar({ current, total }: Props) {
         <View style={{ flex: 1 - progress }} />
       </View>
       <Text style={styles.label}>
-        問 {current} / {total}
+        問題 {current} / {total}
       </Text>
     </View>
   );

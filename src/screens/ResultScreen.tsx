@@ -1,5 +1,5 @@
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../theme/colors';
@@ -11,12 +11,12 @@ type Props = {
 };
 
 function getEvaluation(score: number, total: number): string {
-  if (total === 0) return 'エラー'; // D1
+  if (total === 0) return 'エラー';
   const ratio = score / total;
-  if (ratio === 1) return '完璧！さすがの知識力！';
-  if (ratio >= 0.8) return '素晴らしい！かなり詳しいね！';
+  if (ratio === 1) return '完璧！さすがの知識量！';
+  if (ratio >= 0.8) return '素晴らしい！かなり詳しいですね！';
   if (ratio >= 0.6) return 'なかなかいける！';
-  if (ratio >= 0.4) return 'もう少し！復習しよう';
+  if (ratio >= 0.4) return 'もう少し。復習してみよう';
   return 'まだまだこれから！';
 }
 

@@ -1,13 +1,13 @@
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ChoiceButton from '../components/ChoiceButton';
 import ProgressBar from '../components/ProgressBar';
-import { generateQuestions } from '../utils/generateQuestions';
 import { Colors } from '../theme/colors';
-import { QuizQuestion } from '../types/quiz';
 import { RootStackParamList } from '../types/navigation';
+import { QuizQuestion } from '../types/quiz';
+import { generateQuestions } from '../utils/generateQuestions';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Quiz'>;
@@ -27,6 +27,8 @@ type ScreenPhase =
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'ready'; questions: QuizQuestion[] };
+
+const LOAD_ERROR_MESSAGE = '問題の生成に失敗しました。\nネットワーク接続を確認してください。';
 
 export default function QuizScreen({ navigation, route }: Props) {
   const { category, difficulty, reviewQuestions } = route.params;
@@ -53,10 +55,23 @@ export default function QuizScreen({ navigation, route }: Props) {
 
     setScreenPhase({ status: 'loading' });
     generateQuestions(category)
-      .then((qs) => { if (!cancelled) setScreenPhase({ status: 'ready', questions: qs }); })
-      .catch(() => { if (!cancelled) setScreenPhase({ status: 'error', message: '問題の生成に失敗しました。\nネットワーク接続を確認してください。' }); });
-    return () => { cancelled = true; };
+      .then((qs) => {
+        if (!cancelled) setScreenPhase({ status: 'ready', questions: qs });
+      })
+      .catch(() => {
+        if (!cancelled) setScreenPhase({ status: 'error', message: LOAD_ERROR_MESSAGE });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [category, reviewQuestions]);
+
+  const retryLoad = () => {
+    setScreenPhase({ status: 'loading' });
+    generateQuestions(category)
+      .then((qs) => setScreenPhase({ status: 'ready', questions: qs }))
+      .catch(() => setScreenPhase({ status: 'error', message: LOAD_ERROR_MESSAGE }));
+  };
 
   if (screenPhase.status === 'loading') {
     return (
@@ -73,12 +88,7 @@ export default function QuizScreen({ navigation, route }: Props) {
         <Text style={styles.errorText}>{screenPhase.message}</Text>
         <TouchableOpacity
           style={styles.nextButton}
-          onPress={() => {
-            setScreenPhase({ status: 'loading' });
-            generateQuestions(category)
-              .then((qs) => setScreenPhase({ status: 'ready', questions: qs }))
-              .catch(() => setScreenPhase({ status: 'error', message: '問題の生成に失敗しました。\nネットワーク接続を確認してください。' }));
-          }}
+          onPress={retryLoad}
         >
           <Text style={styles.nextButtonText}>再試行</Text>
         </TouchableOpacity>
@@ -152,9 +162,9 @@ export default function QuizScreen({ navigation, route }: Props) {
           {phase.answered && (
             <>
               <View style={[styles.resultBanner, phase.isCorrect ? styles.resultCorrect : styles.resultIncorrect]}>
-                <Text style={styles.resultIcon}>{phase.isCorrect ? '✓' : '✗'}</Text>
+                <Text style={styles.resultIcon}>{phase.isCorrect ? '✓' : '×'}</Text>
                 <Text style={styles.resultText}>
-                  {phase.isCorrect ? '正解！' : `不正解　正解：${currentQuestion.correctChoice}`}
+                  {phase.isCorrect ? '正解！' : `不正解。正解は ${currentQuestion.correctChoice}`}
                 </Text>
               </View>
               <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
