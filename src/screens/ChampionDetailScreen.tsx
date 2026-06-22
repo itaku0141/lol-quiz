@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { getChampionDetail } from '../services/dataDragon';
 import { Colors } from '../theme/colors';
-import { ChampionDetail, ChampionSkillInfo } from '../types/champion';
 import { RootStackParamList } from '../types/navigation';
+import { ChampionDetail, ChampionSkillInfo } from '../types/champion';
 
 type Props = {
   route: RouteProp<RootStackParamList, 'ChampionDetail'>;
@@ -42,12 +42,20 @@ export default function ChampionDetailScreen({ route }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false; // C2
+    let cancelled = false;
     getChampionDetail(championId)
-      .then((d) => { if (!cancelled) setDetail(d); })
-      .catch(() => { if (!cancelled) setError('データの読み込みに失敗しました'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .then((d) => {
+        if (!cancelled) setDetail(d);
+      })
+      .catch(() => {
+        if (!cancelled) setError('データの読み込みに失敗しました');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [championId]);
 
   if (loading) {

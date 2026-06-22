@@ -2,19 +2,19 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../theme/colors';
-import { QuizCategory } from '../types/quiz';
 import { RootStackParamList } from '../types/navigation';
+import { QuizCategory } from '../types/quiz';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
 };
 
 const CATEGORY_LABELS: Record<QuizCategory, string> = {
-  skill:    'スキル (Q/W/E)',
+  skill: 'スキル (Q/W/E)',
   ultimate: 'アルティメット',
-  passive:  'パッシブ',
-  item:     'アイテム',
-  rune:     'ルーン',
+  passive: 'パッシブ',
+  item: 'アイテム',
+  rune: 'ルーン',
 };
 
 export default function HomeScreen({ navigation }: Props) {
@@ -25,11 +25,11 @@ export default function HomeScreen({ navigation }: Props) {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>LoL Quiz</Text>
-          <Text style={styles.subtitle}>League of Legends 知識を試そう</Text>
+          <Text style={styles.subtitle}>League of Legends の知識を試そう</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>カテゴリ</Text>
+          <Text style={styles.sectionLabel}>カテゴリー</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}

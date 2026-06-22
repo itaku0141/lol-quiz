@@ -13,7 +13,7 @@ type Props = {
 const ICON: Record<ChoiceState, string | null> = {
   default: null,
   correct: '✓',
-  incorrect: '✗',
+  incorrect: '×',
   disabled: null,
 };
 
